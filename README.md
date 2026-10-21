@@ -1,5 +1,5 @@
 # Shop API
-
+![CI](https://github.com/KatiaBoutarfa/ShopApp/actions/workflows/ci.yml/badge.svg)
 REST API for a small e-commerce platform: users, products and orders, secured with JWT access tokens and rotating refresh tokens.
 
 This is **phase 1**: a modular monolith. Later phases add Docker, Redis, CI/CD and a split into microservices.
