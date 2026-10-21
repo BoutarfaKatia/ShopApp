@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -40,6 +41,7 @@ class OrderServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private UserRepository userRepository;
     @Mock private ProductRepository productRepository;
+    @Mock private CacheManager cacheManager;
     @InjectMocks private OrderService orderService;
 
     @Test

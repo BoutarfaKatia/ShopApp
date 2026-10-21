@@ -19,16 +19,22 @@ import com.katia.shop.user.entity.User;
 import com.katia.shop.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -38,6 +44,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final CacheManager cacheManager;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request, Long userId) {
@@ -79,6 +86,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         log.info("Order created. orderId={}, userId={}, total={}", saved.getId(), userId, total);
+        evictProductsAfterCommit(quantities.keySet());
         return OrderMapper.toResponse(saved);
     }
 
@@ -106,11 +114,26 @@ public class OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         order.getItems().forEach(i -> i.getProduct().increaseStock(i.getQuantity()));
         log.info("Order cancelled. orderId={}", id);
+        evictProductsAfterCommit(order.getItems().stream().map(i -> i.getProduct().getId()).toList());
     }
 
     public Page<OrderResponse> getUserOrders(Long id, Pageable pageable) {
 
         return orderRepository.findByUserId(id, pageable)
                 .map(OrderMapper::toResponse);
+    }
+
+    private void evictProductsAfterCommit(Collection<Long> productIds) {
+        Runnable evict = () -> {
+            Cache cache = cacheManager.getCache("products");
+            if (cache != null) productIds.forEach(cache::evict);
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { evict.run(); }
+            });
+        } else {
+            evict.run();
+        }
     }
 }

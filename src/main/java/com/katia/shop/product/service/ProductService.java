@@ -8,6 +8,8 @@ import com.katia.shop.product.dto.ProductResponse;
 import com.katia.shop.product.entity.Product;
 import com.katia.shop.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +31,8 @@ public class ProductService {
                 : productRepository.findByActiveTrue(pageable);
         return page.map(ProductMapper::toResponse); }
 
-
+    @Cacheable(cacheNames = "products", key = "#id")
+    @Transactional
     public ProductResponse findProductById(Long id) {
       return  productRepository.findById(id)
               .map(ProductMapper::toResponse)
@@ -45,7 +48,8 @@ public class ProductService {
         return ProductMapper.toResponse(productRepository.save(ProductMapper.fromRequest(request)));
     }
 
-
+    @CacheEvict(cacheNames = "products", key = "#id")
+    @Transactional
     public ProductResponse updateProduct(Long id ,ProductRequest productRequest) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
@@ -55,7 +59,8 @@ public class ProductService {
         ProductMapper.updateEntity(product, productRequest);
         return ProductMapper.toResponse(product);
     }
-
+    @CacheEvict(cacheNames = "products", key = "#id")
+    @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
