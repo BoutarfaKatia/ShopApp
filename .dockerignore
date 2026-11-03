@@ -3,3 +3,6 @@ target/
 .idea/
 *.iml
 .env
+legacy-monolith/
+**/target/
+.github/
