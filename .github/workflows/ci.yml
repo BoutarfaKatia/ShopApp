@@ -31,5 +31,7 @@ jobs:
       - name: Build and test
         run: ./mvnw -B -ntp verify
 
-      - name: Build Docker image
-        run: docker build -t shop-api:ci .
+      - name: Build product-service image
+        run: docker build -f product-service/Dockerfile -t product-service:ci .
+      - name: Build auth-service image
+        run: docker build -f auth-service/Dockerfile -t auth-service:ci .
