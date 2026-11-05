@@ -3,6 +3,7 @@ package com.katia.shop.product.integration;
 import com.katia.shop.product.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
@@ -57,5 +58,11 @@ public class ProductApiIntegrationTest {
     @Test
     void getProducts_shouldBePublic() throws Exception {
         mockMvc.perform(get("/api/products")).andExpect(status().isOk());
+    }
+
+    @Test
+    void getProducts_shouldReturn401WhenBearerIsNotAJwt() throws Exception {
+        mockMvc.perform(get("/api/products").header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt"))
+                .andExpect(status().isUnauthorized());
     }
 }
